@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Study Assistant</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;color:#e2e8f0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+.app{max-width:900px;margin:0 auto;padding:24px 16px}
+.header{text-align:center;padding:32px 0 24px}
+.header-icon{font-size:36px;margin-bottom:8px}
+.header h1{font-size:28px;font-weight:700;color:#f1f5f9;letter-spacing:-0.5px}
+.header p{font-size:14px;color:#64748b;margin-top:4px}
+.nav{display:flex;gap:8px;justify-content:center;margin-bottom:32px}
+.nav-btn{padding:10px 24px;border-radius:8px;border:1.5px solid #334155;background:transparent;color:#94a3b8;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s}
+.nav-btn:hover{border-color:#3b82f6;color:#3b82f6;background:rgba(59,130,246,0.08)}
+.nav-btn.active{background:#3b82f6;border-color:#3b82f6;color:#fff}
+.page{display:none}
+.page.active{display:block}
+.card{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title span{font-size:16px}
+.input-row{display:flex;gap:10px;align-items:center}
+.inp{flex:1;background:#0f172a;border:1.5px solid #334155;border-radius:8px;padding:11px 14px;color:#e2e8f0;font-size:14px;outline:none;transition:border-color 0.2s}
+.inp:focus{border-color:#3b82f6}
+.inp::placeholder{color:#475569}
+.btn{padding:10px 18px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.18s;white-space:nowrap}
+.btn-primary{background:#3b82f6;color:#fff}
+.btn-primary:hover{background:#2563eb}
+.btn-success{background:#22c55e;color:#fff}
+.btn-success:hover{background:#16a34a}
+.btn-outline{background:transparent;border:1.5px solid #334155;color:#94a3b8}
+.btn-outline:hover{border-color:#64748b;color:#e2e8f0}
+.btn-danger{background:transparent;border:1.5px solid #ef4444;color:#ef4444}
+.btn-danger:hover{background:rgba(239,68,68,0.1)}
+.btn-sm{padding:7px 14px;font-size:13px}
+.output-area{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;min-height:60px;font-size:14px;line-height:1.7;color:#cbd5e1;margin-top:14px;display:none}
+.output-area.visible{display:block}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{padding:7px 14px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid;transition:all 0.18s}
+.chip-advanced{color:#a78bfa;border-color:#7c3aed;background:rgba(124,58,237,0.08)}
+.chip-advanced:hover{background:rgba(124,58,237,0.18)}
+.chip-simpler{color:#38bdf8;border-color:#0284c7;background:rgba(2,132,199,0.08)}
+.chip-simpler:hover{background:rgba(2,132,199,0.18)}
+.chip-summary{color:#fb923c;border-color:#ea580c;background:rgba(234,88,12,0.08)}
+.chip-summary:hover{background:rgba(234,88,12,0.18)}
+.chip-doubt{color:#4ade80;border-color:#16a34a;background:rgba(22,163,74,0.08)}
+.chip-doubt:hover{background:rgba(22,163,74,0.18)}
+.upload-zone{border:2px dashed #334155;border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative}
+.upload-zone:hover{border-color:#3b82f6;background:rgba(59,130,246,0.04)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:28px;margin-bottom:8px}
+.upload-text{font-size:14px;color:#64748b}
+.upload-text strong{color:#94a3b8}
+.file-name{font-size:13px;color:#22c55e;margin-top:8px;display:none}
+.voice-bar{display:flex;align-items:center;gap:10px;margin-top:14px;padding:10px 14px;background:#0f172a;border-radius:8px;border:1px solid #334155}
+.voice-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;animation:pulse 1.2s infinite}
+.voice-label{font-size:13px;color:#64748b;flex:1}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.voice-bar.hidden{display:none}
+.quiz-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.loader{display:none;text-align:center;padding:20px;color:#475569;font-size:14px}
+.loader.visible{display:block}
+.dots::after{content:'...';animation:dots 1.2s steps(4,end) infinite}
+@keyframes dots{0%,100%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px;text-align:center}
+.stat-num{font-size:22px;font-weight:700;color:#3b82f6}
+.stat-label{font-size:11px;color:#475569;margin-top:2px}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="header-icon">🚀</div>
+    <h1>AI Study Assistant</h1>
+    <p>Powered by Claude · Adaptive · Voice-enabled</p>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="switchPage('home',this)">🏠 Home</button>
+    <button class="nav-btn" onclick="switchPage('quiz',this)">🧠 Quiz</button>
+    <button class="nav-btn" onclick="switchPage('revision',this)">📖 Revision</button>
+  </div>
+
+  <!-- HOME PAGE -->
+  <div id="home" class="page active">
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="sessCount">0</div><div class="stat-label">Sessions</div></div>
+      <div class="stat-card"><div class="stat-num" id="topicCount">0</div><div class="stat-label">Topics Studied</div></div>
+      <div class="stat-card"><div class="stat-num" id="quizCount">0</div><div class="stat-label">Quizzes Taken</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>📎</span> Upload Study Material</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".pdf,.txt,.docx" onchange="onFileSelect(this)">
+        <div class="upload-icon">📄</div>
+        <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br>PDF, TXT, DOCX supported</div>
+        <div class="file-name" id="fileName"></div>
+      </div>
+      <div style="margin-top:12px;text-align:right">
+        <button class="btn btn-primary" onclick="upload()">Upload & Process</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>💬</span> Ask a Question</div>
+      <div class="input-row">
+        <input class="inp" id="question" placeholder="e.g. What is photosynthesis?">
+        <button class="btn btn-success" onclick="ask()">Ask</button>
+      </div>
+      <div class="loader" id="askLoader">Thinking<span class="dots"></span></div>
+      <div class="output-area" id="askOutput"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>📚</span> Study a Topic</div>
+      <div class="input-row">
+        <input class="inp" id="topic" placeholder="e.g. Thermodynamics, World War II…">
+        <button class="btn btn-success" onclick="study()">Study</button>
+      </div>
+      <div class="loader" id="studyLoader">Preparing explanation<span class="dots"></span></div>
+      <div class="output-area" id="studyOutput"></div>
+      <div class="voice-bar hidden" id="studyVoiceBar">
+        <div class="voice-dot"></div>
+        <span class="voice-label">Speaking…</span>
+        <button class="btn btn-danger btn-sm" onclick="stopVoice('studyVoiceBar')">Stop</button>
+      </div>
+      <div class="chip-row">
+        <button class="chip chip-advanced" onclick="feedback('understood')">⬆ Advanced</button>
+        <button class="chip chip-simpler" onclick="feedback('not_understood')">⬇ Simpler</button>
+        <button class="chip chip-summary" onclick="feedback('distracted')">📋 Summary</button>
+        <button class="chip chip-doubt" onclick="doubt()">❓ Doubt</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- QUIZ PAGE -->
+  <div id="quiz" class="page">
+    <div class="card">
+      <div class="card-title"><span>🧠</span> Generate a Quiz</div>
+      <div class="quiz-meta">
+        <input class="inp" id="quizTopic" placeholder="Topic (e.g. Biology)">
+        <input class="inp" id="marks" placeholder="Marks (e.g. 10)" type="number" min="1" max="100">
+      </div>
+      <button class="btn btn-success" style="width:100%" onclick="quiz()">Start Quiz</button>
+      <div class="loader" id="quizLoader">Generating quiz<span class="dots"></span></div>
+      <div class="output-area" id="quizOut"></div>
+      <div class="voice-bar hidden" id="quizVoiceBar">
+        <div class="voice-dot"></div>
+        <span class="voice-label">Reading quiz…</span>
+        <button class="btn btn-danger btn-sm" onclick="stopVoice('quizVoiceBar')">Stop</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVISION PAGE -->
+  <div id="revision" class="page">
+    <div class="card">
+      <div class="card-title"><span>📖</span> Quick Revision</div>
+      <div class="input-row">
+        <input class="inp" id="revTopic" placeholder="Topic to revise (e.g. Newton's Laws)">
+        <button class="btn btn-primary" onclick="revision()">Revise</button>
+      </div>
+      <div class="loader" id="revLoader">Compiling revision notes<span class="dots"></span></div>
+      <div class="output-area" id="revOut"></div>
+      <div class="voice-bar hidden" id="revVoiceBar">
+        <div class="voice-dot"></div>
+        <span class="voice-label">Reading notes…</span>
+        <button class="btn btn-danger btn-sm" onclick="stopVoice('revVoiceBar')">Stop</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let speech;
+let sessCount=0,topicCount=0,quizCount=0;
+
+function switchPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function onFileSelect(inp){
+  const fn=document.getElementById('fileName');
+  if(inp.files[0]){fn.textContent=inp.files[0].name;fn.style.display='block';}
+}
+
+function speak(t,barId){
+  speechSynthesis.cancel();
+  speech=new SpeechSynthesisUtterance(t);
+  speech.onend=()=>{if(barId)document.getElementById(barId).classList.add('hidden');};
+  speechSynthesis.speak(speech);
+  if(barId)document.getElementById(barId).classList.remove('hidden');
+}
+
+function stopVoice(barId){
+  speechSynthesis.cancel();
+  if(barId)document.getElementById(barId).classList.add('hidden');
+}
+
+function showOutput(outId,loaderId,text,barId){
+  const el=document.getElementById(outId);
+  el.innerHTML=text.replace(/\n/g,'<br>');
+  el.classList.add('visible');
+  document.getElementById(loaderId).classList.remove('visible');
+  speak(text,barId);
+}
+
+function setLoading(loaderId,on){
+  document.getElementById(loaderId).classList.toggle('visible',on);
+}
+
+async function callApi(path,body){
+  const r=await fetch('http://localhost:5000'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  return r.json();
+}
+
+async function upload(){
+  let fd=new FormData();
+  fd.append('file',fileInput.files[0]);
+  let r=await fetch('http://localhost:5000/upload',{method:'POST',body:fd});
+  const d=await r.json();
+  alert(JSON.stringify(d));
+}
+
+async function ask(){
+  const q=document.getElementById('question').value.trim();
+  if(!q)return;
+  setLoading('askLoader',true);
+  document.getElementById('askOutput').classList.remove('visible');
+  const d=await callApi('/ask',{question:q});
+  document.getElementById('askOutput').innerHTML=(d.answer||'').replace(/\n/g,'<br>');
+  document.getElementById('askOutput').classList.add('visible');
+  document.getElementById('askLoader').classList.remove('visible');
+  sessCount++;document.getElementById('sessCount').textContent=sessCount;
+}
+
+async function study(){
+  const t=document.getElementById('topic').value.trim();
+  if(!t)return;
+  setLoading('studyLoader',true);
+  document.getElementById('studyOutput').classList.remove('visible');
+  const d=await callApi('/study',{topic:t});
+  showOutput('studyOutput','studyLoader',d.explanation||'','studyVoiceBar');
+  topicCount++;document.getElementById('topicCount').textContent=topicCount;
+}
+
+async function feedback(f){
+  const t=document.getElementById('topic').value.trim();
+  setLoading('studyLoader',true);
+  document.getElementById('studyOutput').classList.remove('visible');
+  const d=await callApi('/adapt',{feedback:f,topic:t});
+  showOutput('studyOutput','studyLoader',d.result||'','studyVoiceBar');
+}
+
+async function quiz(){
+  const t=document.getElementById('quizTopic').value.trim();
+  const m=document.getElementById('marks').value;
+  if(!t)return;
+  setLoading('quizLoader',true);
+  document.getElementById('quizOut').classList.remove('visible');
+  const d=await callApi('/quiz',{topic:t,marks:m});
+  showOutput('quizOut','quizLoader',d.quiz||'','quizVoiceBar');
+  quizCount++;document.getElementById('quizCount').textContent=quizCount;
+}
+
+async function revision(){
+  const t=document.getElementById('revTopic').value.trim();
+  if(!t)return;
+  setLoading('revLoader',true);
+  document.getElementById('revOut').classList.remove('visible');
+  const d=await callApi('/revision',{topic:t});
+  showOutput('revOut','revLoader',d.result||'','revVoiceBar');
+}
+
+async function doubt(){
+  const d=prompt('Type your doubt:');
+  if(!d)return;
+  setLoading('studyLoader',true);
+  document.getElementById('studyOutput').classList.remove('visible');
+  const r=await callApi('/doubt',{doubt:d});
+  showOutput('studyOutput','studyLoader',r.answer||'','studyVoiceBar');
+}
+</script>
+
+</body>
+</html>
